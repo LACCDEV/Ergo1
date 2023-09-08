@@ -1,0 +1,342 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <h1>LEITZ Sensor</h1> 
+
+    <div class="status widget">
+      <button id="pairButton">CONNECT</button>
+      <div class="label statusBar" id="bluetooth">Click the connect button to connect your device</div>
+    </div>
+
+</head>
+<body>
+
+<div class="sensor-values">
+  <p><span id="mx-value">Mx: </span></p>
+  <p><span id="my-value">My: </span></p>
+  <p><span id="mz-value">Mz: </span></p>
+</div>
+
+  <div class="grid" id="sensorGrid"></div>
+
+<style>
+
+  body {
+    padding: 20px;
+    font-family: 'Roboto', sans-serif; /* Add this line */
+  }
+
+  h1 {
+  position: flex;
+  margin-left: 15%;
+  top: 50px;
+  }
+
+  .widget {
+  position: flex;
+  margin-left: 15%;
+  top: 80px;
+  }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(20, 1fr);
+      background-color: #b5c0c3;
+      max-height: 60vh;
+      max-width: 60vh;
+      overflow: auto;
+      position: absolute;
+      top: calc(60% - 30vh); /* Half of viewport height minus half of table height */
+      left: calc(50% - 30vh); /* Half of viewport width minus half of table width */
+    }
+
+    .grid-field {
+      border: 1px;
+      padding: 12px;
+      text-align: center;
+    }
+
+.placeholder {
+  background-color: white; /* Set the desired background color */
+  pointer-events: none; /* Disable interaction with these cells */
+}
+
+.activeGreen {
+  background-color: #40a59f; /* Set the desired background color */
+  pointer-events: none; /* Disable interaction with these cells */
+}
+
+.activeGreen2 {
+  background-color: #8ad0c5; /* Set the desired background color */
+  pointer-events: none; /* Disable interaction with these cells */
+}
+
+.activeRed {
+  background-color: #e67f76; /* Set the desired background color */
+  pointer-events: none; /* Disable interaction with these cells */
+}
+
+.activeRed2 {
+  background-color: #e39c88; /* Set the desired background color */
+  pointer-events: none; /* Disable interaction with these cells */
+}
+
+</style>
+</body>
+
+<script type="text/javascript">
+
+  var maxRecords = 64;
+  var mxValue = 0;
+  var myValue = 0;
+  var mzValue = 0;
+
+var NiclaSenseME = {
+    magnet:
+    {
+      uuid: '19b10000-7001-537e-4f6c-d104768a1214',
+      properties: ['BLENotify'],
+      structure: ['Float32', 'Float32', 'Float32'],
+      data: { 'Mx': [], 'My': [], 'Mz': [] }
+    }
+};
+
+  const sensors = Object.keys(NiclaSenseME);
+  const SERVICE_UUID = '19b10000-0000-537e-4f6c-d104768a1214';
+  var bytesReceived = 0;
+  var bytesPrevious = 0;
+  var Status = 0;
+
+  // UI elements
+  const pairButton = document.getElementById('pairButton');
+  const BLEstatus = document.getElementById('bluetooth');
+
+  if ("bluetooth" in navigator) {
+    pairButton.addEventListener('click', function (event) {
+      connect();
+    });
+    // else the browser doesn't support bluetooth
+  } else {
+    msg("browser not supported"); /*pairButton.style.backgroundColor = "red";*/
+    snack("Error: This browser doesn't support Web Bluetooth. Try using Chrome.", 1);
+  }
+
+  // Top middle information label
+  function msg(m) {
+    BLEstatus.innerHTML = m;
+  }
+
+  async function connect() {
+    pairButton.style.backgroundColor = "grey";
+    pairButton.style.color = 'black';
+    pairButton.innerHTML = "PAIRING";
+    msg('requesting device ...');
+
+    const device = await navigator.bluetooth.requestDevice({
+      filters: [
+        {
+          services: [SERVICE_UUID] // SERVICE_UUID
+        }
+      ]
+    });
+
+    msg('connecting to device ...');
+    device.addEventListener('gattserverdisconnected', onDisconnected);
+    const server = await device.gatt.connect();
+
+    msg('getting primary service ...');
+    const service = await server.getPrimaryService(SERVICE_UUID);
+
+    // Set up the characteristics
+    for (const sensor of sensors) {
+      msg('characteristic ' + sensor + "...");
+      NiclaSenseME[sensor].characteristic = await service.getCharacteristic(NiclaSenseME[sensor].uuid);
+      // Set up notification
+      if (NiclaSenseME[sensor].properties.includes("BLENotify")) {
+        NiclaSenseME[sensor].characteristic.addEventListener('characteristicvaluechanged', function (event) { handleIncoming(NiclaSenseME[sensor], event.target.value); });
+        await NiclaSenseME[sensor].characteristic.startNotifications();
+      }
+      // Set up polling for read
+      if (NiclaSenseME[sensor].properties.includes("BLERead")) {
+        NiclaSenseME[sensor].polling = setInterval(function () {
+          NiclaSenseME[sensor].characteristic.readValue().then(function (data) { handleIncoming(NiclaSenseME[sensor], data); })
+        }
+          , 500);
+      }
+
+      NiclaSenseME[sensor].rendered = false;
+    }
+    pairButton.style.backgroundColor = 'green';
+    pairButton.style.color = 'white';
+    pairButton.innerHTML = "PAIRED";
+    msg('Characteristics configured');
+  }
+
+function handleIncoming(sensor, dataReceived) {
+  const columns = Object.keys(sensor.data);
+    const typeMap = {
+      "Uint8": { fn: DataView.prototype.getUint8, bytes: 1 },
+      "Uint16": { fn: DataView.prototype.getUint16, bytes: 2 },
+      "Uint32": { fn: DataView.prototype.getUint32, bytes: 4 },
+      "Int16": { fn: DataView.prototype.getInt16, bytes: 2 },
+      "Float32": { fn: DataView.prototype.getFloat32, bytes: 4 }
+    };
+    var packetPointer = 0, i = 0;
+
+    // Read each sensor value in the BLE packet and push into the data array
+    sensor.structure.forEach(function (dataType) {
+      // Lookup function to extract data for given sensor property type
+      var dataViewFn = typeMap[dataType].fn.bind(dataReceived);
+      // Read sensor ouput value - true => Little Endian
+      var unpackedValue = dataViewFn(packetPointer, true);
+      // Push sensor reading onto data array
+      sensor.data[columns[i]].push(unpackedValue);
+      // Keep array at buffer size
+      if (sensor.data[columns[i]].length > maxRecords) { sensor.data[columns[i]].shift(); }
+      // move pointer forward in data packet to next value
+      packetPointer += typeMap[dataType].bytes;
+      bytesReceived += typeMap[dataType].bytes;
+      i++;
+    });
+
+  updateSensorValues(sensor.data);
+  }
+
+  function onDisconnected(event) {
+    let device = event.target;
+    pairButton.style.backgroundColor = "red";
+    pairButton.innerHTML = "PAIR LEITZ";
+    // clear read polling
+    for (const sensor of sensors) {
+      if (typeof NiclaSenseME[sensor].polling !== 'undefined') {
+        clearInterval(NiclaSenseME[sensor].polling);
+      }
+    }  
+  }
+
+function updateSensorValues(sensorData) {
+  mxValue = parseInt(sensorData['Mx'][sensorData['Mx'].length - 1]);
+  myValue = parseInt(sensorData['My'][sensorData['My'].length - 1]);
+  mzValue = parseInt(sensorData['Mz'][sensorData['Mz'].length - 1]);
+
+  const mxValueElement = document.getElementById('mx-value');
+  const myValueElement = document.getElementById('my-value');
+  const mzValueElement = document.getElementById('mz-value');
+
+  mxValueElement.textContent = `Mx: ${mxValue}`;
+  myValueElement.textContent = `My: ${myValue}`;
+  mzValueElement.textContent = `Mz: ${mzValue}`;
+
+// Funktion zur Anzeige der Webbenachrichtigung
+function showNotification(content) {
+  if ('Notification' in window) {
+    Notification.requestPermission().then(function (permission) {
+      if (permission === 'granted') {
+        new Notification(content);
+      }
+    });
+  }
+}
+
+// Überwache Änderungen an der Variable "Status"
+function updateStatus(newStatus) {
+  if (newStatus === 1) {
+    showNotification('Perfect');
+  } else if (newStatus === 2) {
+    showNotification('go up');
+  }
+}
+ 
+// Sitzposition aufrecht 
+if (
+  mxValue >= 0.9 * myValue &&
+  mxValue <= 1.1 * myValue &&
+  mzValue >= -200 &&
+  mzValue <= 300
+) {
+  Status = 1;
+  document.querySelector('.grid-field:nth-child(207)').classList.add('activeGreen'); // Row11 Co7 = 207 = (11 - 1) * 20 + 7
+  document.querySelector('.grid-field:nth-child(187)').classList.add('activeGreen');
+  document.querySelector('.grid-field:nth-child(214)').classList.add('activeGreen'); // Row11 Co14 = 214 = (11 - 1) * 20 + 14
+  document.querySelector('.grid-field:nth-child(194)').classList.add('activeGreen');
+} else {
+  document.querySelector('.grid-field:nth-child(207)').classList.remove('activeGreen');
+  document.querySelector('.grid-field:nth-child(187)').classList.remove('activeGreen');
+  document.querySelector('.grid-field:nth-child(214)').classList.remove('activeGreen');
+  document.querySelector('.grid-field:nth-child(194)').classList.remove('activeGreen');
+}
+
+// Sitzposition vorne 
+if (mxValue >= 0.5 * myValue && mxValue <= 1.5 * myValue) {
+  document.querySelector('.grid-field:nth-child(107)').classList.add('activeRed');
+  document.querySelector('.grid-field:nth-child(114)').classList.add('activeRed');
+} else {
+  document.querySelector('.grid-field:nth-child(107)').classList.remove('activeRed');
+  document.querySelector('.grid-field:nth-child(114)').classList.remove('activeRed');
+}
+
+// Sitzposition angelehnt 
+if (mxValue >= 1 && mxValue <= 1000) {
+  Status = 2;
+  document.querySelector('.grid-field:nth-child(107)').classList.add('activeRed');
+  document.querySelector('.grid-field:nth-child(114)').classList.add('activeRed');
+} else {
+  document.querySelector('.grid-field:nth-child(107)').classList.remove('activeRed');
+  document.querySelector('.grid-field:nth-child(114)').classList.remove('activeRed');
+}
+
+}
+
+// Create the 20x20 sensor grid
+const sensorGrid = document.getElementById('sensorGrid');
+
+for (let row = 1; row <= 20; row++) {
+  for (let col = 1; col <= 20; col++) {
+    const gridField = document.createElement('div');
+    gridField.classList.add('grid-field');
+
+    // Add a placeholder class to specific cells
+if (
+  (row === 20) ||
+  (row === 19) ||
+  (row === 18) ||
+  (row === 17 && col === 1) ||
+  (row === 17 && col === 2) ||
+  (row === 17 && col === 9) ||
+  (row === 17 && col === 10) ||
+  (row === 17 && col === 11) ||
+  (row === 17 && col === 12) ||
+  (row === 17 && col === 19) ||
+  (row === 17 && col === 20) ||
+  (row === 16 && col === 1) ||
+  (row === 16 && col === 10) ||
+  (row === 16 && col === 11) ||
+  (row === 16 && col === 20) ||
+  (row === 15 && col === 1) ||
+  (row === 15 && col === 10) ||
+  (row === 15 && col === 11) ||
+  (row === 15 && col === 20) ||
+  (row === 14 && col === 10) ||
+  (row === 14 && col === 11) ||
+  (row === 2 && col === 7) ||
+  (row === 2 && col === 14) ||
+  (row === 1 && col === 1) ||
+  (row === 1 && col === 6) ||
+  (row === 1 && col === 7) ||
+  (row === 1 && col === 8) ||
+  (row === 1 && col === 13) ||
+  (row === 1 && col === 14) ||
+  (row === 1 && col === 15) ||
+  (row === 1 && col === 20)
+) {
+  gridField.classList.add('placeholder');
+}
+
+    sensorGrid.appendChild(gridField);
+  }
+}
+
+
+</script>
+</html>	

@@ -91,8 +91,8 @@
   var mxValue = 0;
   var myValue = 0;
   var mzValue = 0;
-  var Status = 0;
-  var previousStatus = 0;
+  var NoteStatus = 0;
+  var previousNoteStatus = 0;
 
 var NiclaSenseME = {
     magnet:
@@ -113,31 +113,6 @@ var NiclaSenseME = {
   const pairButton = document.getElementById('pairButton');
   const BLEstatus = document.getElementById('bluetooth');
 
-  // Benachrichtigungsfunktion
-  function showNotification(status) {
-    let notificationText = '';
-    switch (status) {
-      case 1:
-        notificationText = 'Perfect';
-        break;
-      case 2:
-        notificationText = 'Go up';
-        break;
-      default:
-        notificationText = 'Unknown Status';
-    }
-
-    // Prüfen, ob Benachrichtigungen unterstützt werden
-    if ('Notification' in window) {
-      // Benachrichtigungsberechtigung anfordern
-      Notification.requestPermission().then(function (permission) {
-        if (permission === 'granted') {
-          // Benachrichtigung anzeigen
-          new Notification(notificationText);
-        }
-      });
-    }
-  }
 
   if ("bluetooth" in navigator) {
     pairButton.addEventListener('click', function (event) {
@@ -262,7 +237,7 @@ if (
   mzValue >= -200 &&
   mzValue <= 300
 ) {
-  Status = 1;
+  NoteStatus = 1;
   document.querySelector('.grid-field:nth-child(207)').classList.add('activeGreen'); // Row11 Co7 = 207 = (11 - 1) * 20 + 7
   document.querySelector('.grid-field:nth-child(187)').classList.add('activeGreen');
   document.querySelector('.grid-field:nth-child(214)').classList.add('activeGreen'); // Row11 Co14 = 214 = (11 - 1) * 20 + 14
@@ -285,7 +260,7 @@ if (mxValue >= 0.5 * myValue && mxValue <= 1.5 * myValue) {
 
 // Sitzposition angelehnt 
 if (mxValue >= 1 && mxValue <= 1000) {
-  Status = 2;
+  NoteStatus = 2;
   document.querySelector('.grid-field:nth-child(107)').classList.add('activeRed');
   document.querySelector('.grid-field:nth-child(114)').classList.add('activeRed');
 } else {
@@ -343,11 +318,48 @@ if (
     sensorGrid.appendChild(gridField);
   }
 
-    // Wenn der Status wechselt, Benachrichtigung anzeigen
-    if (Status !== previousStatus) {
-      showNotification(Status);
-      previousStatus = Status;
+// Funktion zur Anzeige einer Webbenachrichtigung
+function showNotification(message) {
+  // Überprüfen, ob Webbenachrichtigungen vom Browser unterstützt werden
+  if ('Notification' in window) {
+    // Überprüfen, ob die Berechtigung für Benachrichtigungen bereits erteilt wurde
+    if (Notification.permission === 'granted') {
+      // Erstellen und Anzeigen der Benachrichtigung
+      new Notification(message);
+    } else if (Notification.permission !== 'denied') {
+      // Aufforderung zur Berechtigungserteilung für Benachrichtigungen
+      Notification.requestPermission().then(function (permission) {
+        if (permission === 'granted') {
+          // Berechtigung erteilt, Benachrichtigung anzeigen
+          new Notification(message);
+        }
+      });
     }
+  }
+}
+
+// Überwachen von Änderungen in der NoteStatus-Variable
+let previousNoteStatus = null; // Eine Variable zum Speichern des vorherigen Werts
+
+function checkNoteStatusChange() {
+  if (NoteStatus !== previousNoteStatus) {
+    // Der Wert von NoteStatus hat sich geändert
+    if (NoteStatus === 1) {
+      // Zeige eine Benachrichtigung für Status 1
+      showNotification('Status 1: Sitzposition aufrecht');
+    } else if (NoteStatus === 2) {
+      // Zeige eine Benachrichtigung für Status 2
+      showNotification('Status 2: Sitzposition angelehnt');
+    }
+    
+    // Aktualisiere previousNoteStatus
+    previousNoteStatus = NoteStatus;
+  }
+}
+
+// Überprüfen Sie regelmäßig auf Änderungen in NoteStatus (z. B. alle 1 Sekunde)
+setInterval(checkNoteStatusChange, 1000);
+
 }
 
 

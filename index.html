@@ -91,6 +91,8 @@
   var mxValue = 0;
   var myValue = 0;
   var mzValue = 0;
+  var Status = 0;
+  var previousStatus = 0;
 
 var NiclaSenseME = {
     magnet:
@@ -106,11 +108,36 @@ var NiclaSenseME = {
   const SERVICE_UUID = '19b10000-0000-537e-4f6c-d104768a1214';
   var bytesReceived = 0;
   var bytesPrevious = 0;
-  var Status = 0;
 
   // UI elements
   const pairButton = document.getElementById('pairButton');
   const BLEstatus = document.getElementById('bluetooth');
+
+  // Benachrichtigungsfunktion
+  function showNotification(status) {
+    let notificationText = '';
+    switch (status) {
+      case 1:
+        notificationText = 'Perfect';
+        break;
+      case 2:
+        notificationText = 'Go up';
+        break;
+      default:
+        notificationText = 'Unknown Status';
+    }
+
+    // Prüfen, ob Benachrichtigungen unterstützt werden
+    if ('Notification' in window) {
+      // Benachrichtigungsberechtigung anfordern
+      Notification.requestPermission().then(function (permission) {
+        if (permission === 'granted') {
+          // Benachrichtigung anzeigen
+          new Notification(notificationText);
+        }
+      });
+    }
+  }
 
   if ("bluetooth" in navigator) {
     pairButton.addEventListener('click', function (event) {
@@ -227,26 +254,6 @@ function updateSensorValues(sensorData) {
   mxValueElement.textContent = `Mx: ${mxValue}`;
   myValueElement.textContent = `My: ${myValue}`;
   mzValueElement.textContent = `Mz: ${mzValue}`;
-
-// Funktion zur Anzeige der Webbenachrichtigung
-function showNotification(content) {
-  if ('Notification' in window) {
-    Notification.requestPermission().then(function (permission) {
-      if (permission === 'granted') {
-        new Notification(content);
-      }
-    });
-  }
-}
-
-// Überwache Änderungen an der Variable "Status"
-function updateStatus(newStatus) {
-  if (newStatus === 1) {
-    showNotification('Perfect');
-  } else if (newStatus === 2) {
-    showNotification('go up');
-  }
-}
  
 // Sitzposition aufrecht 
 if (
@@ -335,6 +342,12 @@ if (
 
     sensorGrid.appendChild(gridField);
   }
+
+    // Wenn der Status wechselt, Benachrichtigung anzeigen
+    if (Status !== previousStatus) {
+      showNotification(Status);
+      previousStatus = Status;
+    }
 }
 
 

@@ -217,6 +217,44 @@ function handleIncoming(sensor, dataReceived) {
     }  
   }
 
+// Funktion zur Anzeige einer Webbenachrichtigung
+function showNotification(message) {
+  // Überprüfen, ob Webbenachrichtigungen vom Browser unterstützt werden
+  if ('Notification' in window) {
+    // Überprüfen, ob die Berechtigung für Benachrichtigungen bereits erteilt wurde
+    if (Notification.permission === 'granted') {
+      // Erstellen und Anzeigen der Benachrichtigung
+      new Notification(message);
+    } else if (Notification.permission !== 'denied') {
+      // Aufforderung zur Berechtigungserteilung für Benachrichtigungen
+      Notification.requestPermission().then(function (permission) {
+        if (permission === 'granted') {
+          // Berechtigung erteilt, Benachrichtigung anzeigen
+          new Notification(message);
+        }
+      });
+    }
+  }
+}
+
+function checkNoteStatusChange() {
+  if (NoteStatus !== previousNoteStatus) {
+    // Der Wert von NoteStatus hat sich geändert
+    if (NoteStatus === 1) {
+      // Zeige eine Benachrichtigung für Status 1
+      showNotification('Status 1: Sitzposition aufrecht');
+    } else if (NoteStatus === 2) {
+      // Zeige eine Benachrichtigung für Status 2
+      showNotification('Status 2: Sitzposition angelehnt');
+    }
+    
+    // Aktualisiere previousNoteStatus
+    previousNoteStatus = NoteStatus;
+  }
+}
+
+// Überprüfen Sie regelmäßig auf Änderungen in NoteStatus (z. B. alle 1 Sekunde)
+setInterval(checkNoteStatusChange, 1000);
 function updateSensorValues(sensorData) {
   mxValue = parseInt(sensorData['Mx'][sensorData['Mx'].length - 1]);
   myValue = parseInt(sensorData['My'][sensorData['My'].length - 1]);
@@ -317,48 +355,6 @@ if (
 
     sensorGrid.appendChild(gridField);
   }
-
-// Funktion zur Anzeige einer Webbenachrichtigung
-function showNotification(message) {
-  // Überprüfen, ob Webbenachrichtigungen vom Browser unterstützt werden
-  if ('Notification' in window) {
-    // Überprüfen, ob die Berechtigung für Benachrichtigungen bereits erteilt wurde
-    if (Notification.permission === 'granted') {
-      // Erstellen und Anzeigen der Benachrichtigung
-      new Notification(message);
-    } else if (Notification.permission !== 'denied') {
-      // Aufforderung zur Berechtigungserteilung für Benachrichtigungen
-      Notification.requestPermission().then(function (permission) {
-        if (permission === 'granted') {
-          // Berechtigung erteilt, Benachrichtigung anzeigen
-          new Notification(message);
-        }
-      });
-    }
-  }
-}
-
-// Überwachen von Änderungen in der NoteStatus-Variable
-let previousNoteStatus = null; // Eine Variable zum Speichern des vorherigen Werts
-
-function checkNoteStatusChange() {
-  if (NoteStatus !== previousNoteStatus) {
-    // Der Wert von NoteStatus hat sich geändert
-    if (NoteStatus === 1) {
-      // Zeige eine Benachrichtigung für Status 1
-      showNotification('Status 1: Sitzposition aufrecht');
-    } else if (NoteStatus === 2) {
-      // Zeige eine Benachrichtigung für Status 2
-      showNotification('Status 2: Sitzposition angelehnt');
-    }
-    
-    // Aktualisiere previousNoteStatus
-    previousNoteStatus = NoteStatus;
-  }
-}
-
-// Überprüfen Sie regelmäßig auf Änderungen in NoteStatus (z. B. alle 1 Sekunde)
-setInterval(checkNoteStatusChange, 1000);
 
 }
 

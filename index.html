@@ -58,28 +58,28 @@
     }
 
 .placeholder {
-  background-color: white; /* Set the desired background color */
-  pointer-events: none; /* Disable interaction with these cells */
+  background-color: white;
+  pointer-events: none;
 }
 
 .activeGreen {
-  background-color: #40a59f; /* Set the desired background color */
-  pointer-events: none; /* Disable interaction with these cells */
+  background-color: #40a59f;
+  pointer-events: none;
 }
 
 .activeGreen2 {
-  background-color: #8ad0c5; /* Set the desired background color */
-  pointer-events: none; /* Disable interaction with these cells */
+  background-color: #8ad0c5;
+  pointer-events: none;
 }
 
-.activeRed {
-  background-color: #e67f76; /* Set the desired background color */
-  pointer-events: none; /* Disable interaction with these cells */
+.activeRED {
+  background-color: #e67f76;
+  pointer-events: none;
 }
 
-.activeRed2 {
-  background-color: #e39c88; /* Set the desired background color */
-  pointer-events: none; /* Disable interaction with these cells */
+.activeRED2 {
+  background-color: #e39c88;
+  pointer-events: none;
 }
 
 </style>
@@ -242,10 +242,10 @@ function checkNoteStatusChange() {
     // Der Wert von NoteStatus hat sich geändert
     if (NoteStatus === 1) {
       // Zeige eine Benachrichtigung für Status 1
-      showNotification('Status 1: Sitzposition aufrecht');
+      showNotification('Perfect sitting &#128077');
     } else if (NoteStatus === 2) {
       // Zeige eine Benachrichtigung für Status 2
-      showNotification('Status 2: Sitzposition angelehnt');
+      showNotification('Not so good, straighten up');
     }
     
     // Aktualisiere previousNoteStatus
@@ -267,13 +267,34 @@ function updateSensorValues(sensorData) {
   mxValueElement.textContent = `Mx: ${mxValue}`;
   myValueElement.textContent = `My: ${myValue}`;
   mzValueElement.textContent = `Mz: ${mzValue}`;
+
+
+// Sitzposition hinten 
+if (
+  myValue >= 0.9 * mxValue &&
+  myValue <= 1.5 * mxValue &&
+  mzValue >= -300 &&
+  mzValue <= 200
+) {
+  NoteStatus = 2;
+  document.querySelector('.grid-field:nth-child(247)').classList.add('activeRED'); // Row11 Co7 = 207 = (11 - 1) * 20 + 7
+  document.querySelector('.grid-field:nth-child(227)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(254)').classList.add('activeRED'); // Row11 Co14 = 214 = (11 - 1) * 20 + 14
+  document.querySelector('.grid-field:nth-child(234)').classList.add('activeRED');
+} else {
+  document.querySelector('.grid-field:nth-child(247)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(227)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(254)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(234)').classList.remove('activeRED');
+}
+
  
 // Sitzposition aufrecht 
 if (
-  mxValue >= 0.9 * myValue &&
-  mxValue <= 1.1 * myValue &&
-  mzValue >= -200 &&
-  mzValue <= 300
+  myValue >= 0.7 * mxValue &&
+  myValue <= 0.9 * mxValue &&
+  mzValue >= -300 &&
+  mzValue <= 200
 ) {
   NoteStatus = 1;
   document.querySelector('.grid-field:nth-child(207)').classList.add('activeGreen'); // Row11 Co7 = 207 = (11 - 1) * 20 + 7
@@ -287,24 +308,255 @@ if (
   document.querySelector('.grid-field:nth-child(194)').classList.remove('activeGreen');
 }
 
-// Sitzposition vorne 
-if (mxValue >= 0.5 * myValue && mxValue <= 1.5 * myValue) {
-  document.querySelector('.grid-field:nth-child(107)').classList.add('activeRed');
-  document.querySelector('.grid-field:nth-child(114)').classList.add('activeRed');
+// Sitzposition mitte 
+if (
+  myValue >= 0.5 * mxValue &&
+  myValue <= 0.7 * mxValue &&
+  mzValue >= -300 &&
+  mzValue <= 200
+) {
+  NoteStatus = 2;
+  document.querySelector('.grid-field:nth-child(147)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(167)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(154)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(174)').classList.add('activeRED');
 } else {
-  document.querySelector('.grid-field:nth-child(107)').classList.remove('activeRed');
-  document.querySelector('.grid-field:nth-child(114)').classList.remove('activeRed');
+  document.querySelector('.grid-field:nth-child(147)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(167)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(154)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(174)').classList.remove('activeRED');
 }
 
-// Sitzposition angelehnt 
-if (mxValue >= 1 && mxValue <= 1000) {
+// Sitzposition vorne 
+if (
+  myValue >= 0.3 * mxValue &&
+  myValue <= 0.5 * mxValue &&
+  mzValue >= -300 &&
+  mzValue <= 200
+) {
   NoteStatus = 2;
-  document.querySelector('.grid-field:nth-child(107)').classList.add('activeRed');
-  document.querySelector('.grid-field:nth-child(114)').classList.add('activeRed');
+  document.querySelector('.grid-field:nth-child(107)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(127)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(114)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(134)').classList.add('activeRED');
 } else {
-  document.querySelector('.grid-field:nth-child(107)').classList.remove('activeRed');
-  document.querySelector('.grid-field:nth-child(114)').classList.remove('activeRed');
+  document.querySelector('.grid-field:nth-child(107)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(127)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(114)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(134)').classList.remove('activeRED');
 }
+
+// Sitzposition kante 
+if (
+  myValue >= -1.0 * mxValue &&
+  myValue <= 0.3 * mxValue &&
+  mzValue >= -300 &&
+  mzValue <= 200
+) {
+  NoteStatus = 2;
+  document.querySelector('.grid-field:nth-child(67)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(87)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(74)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(94)').classList.add('activeRED');
+} else {
+  document.querySelector('.grid-field:nth-child(67)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(87)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(74)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(94)').classList.remove('activeRED');
+}
+
+// Sitzposition hinten links 
+if (
+  myValue >= 0.9 * mxValue &&
+  myValue <= 1.5 * mxValue &&
+  mzValue >= 200 &&
+  mzValue <= 1000
+) {
+  NoteStatus = 2;
+  document.querySelector('.grid-field:nth-child(246)').classList.add('activeRED'); // Row11 Co7 = 207 = (11 - 1) * 20 + 7
+  document.querySelector('.grid-field:nth-child(226)').classList.add('activeRED');
+} else {
+  document.querySelector('.grid-field:nth-child(246)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(226)').classList.remove('activeRED');
+}
+
+ 
+// Sitzposition aufrecht links
+if (
+  myValue >= 0.7 * mxValue &&
+  myValue <= 0.9 * mxValue &&
+  mzValue >= 200 &&
+  mzValue <= 1000
+) {
+  NoteStatus = 2;
+  document.querySelector('.grid-field:nth-child(206)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(186)').classList.add('activeRED');
+} else {
+  document.querySelector('.grid-field:nth-child(206)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(186)').classList.remove('activeRED');
+}
+
+// Sitzposition mitte links
+if (
+  myValue >= 0.5 * mxValue &&
+  myValue <= 0.7 * mxValue &&
+  mzValue >= 200 &&
+  mzValue <= 1000
+) {
+  NoteStatus = 2;
+  document.querySelector('.grid-field:nth-child(146)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(166)').classList.add('activeRED');
+} else {
+  document.querySelector('.grid-field:nth-child(146)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(166)').classList.remove('activeRED');
+}
+
+// Sitzposition vorne links
+if (
+  myValue >= 0.3 * mxValue &&
+  myValue <= 0.5 * mxValue &&
+  mzValue >= 200 &&
+  mzValue <= 1000
+) {
+  NoteStatus = 2;
+  document.querySelector('.grid-field:nth-child(106)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(126)').classList.add('activeRED');
+} else {
+  document.querySelector('.grid-field:nth-child(106)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(126)').classList.remove('activeRED');
+}
+
+// Sitzposition kante links
+if (
+  myValue >= -1.0 * mxValue &&
+  myValue <= 0.3 * mxValue &&
+  mzValue >= 200 &&
+  mzValue <= 1000
+) {
+  NoteStatus = 2;
+  document.querySelector('.grid-field:nth-child(66)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(86)').classList.add('activeRED');
+} else {
+  document.querySelector('.grid-field:nth-child(66)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(86)').classList.remove('activeRED');
+}
+
+// Sitzposition hinten rechts
+if (
+  myValue >= 0.9 * mxValue &&
+  myValue <= 1.5 * mxValue &&
+  mzValue >= -1000 &&
+  mzValue <= -300
+) {
+  NoteStatus = 2;
+  document.querySelector('.grid-field:nth-child(255)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(235)').classList.add('activeRED');
+} else {
+  document.querySelector('.grid-field:nth-child(255)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(235)').classList.remove('activeRED');
+}
+
+ 
+// Sitzposition aufrecht rechts
+if (
+  myValue >= 0.7 * mxValue &&
+  myValue <= 0.9 * mxValue &&
+  mzValue >= -1000 &&
+  mzValue <= -300
+) {
+  NoteStatus = 2;
+  document.querySelector('.grid-field:nth-child(215)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(195)').classList.add('activeRED');
+} else {
+  document.querySelector('.grid-field:nth-child(215)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(195)').classList.remove('activeRED');
+}
+
+// Sitzposition mitte rechts
+if (
+  myValue >= 0.5 * mxValue &&
+  myValue <= 0.7 * mxValue &&
+  mzValue >= -1000 &&
+  mzValue <= -300
+) {
+  NoteStatus = 2;
+  document.querySelector('.grid-field:nth-child(155)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(175)').classList.add('activeRED');
+} else {
+  document.querySelector('.grid-field:nth-child(155)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(175)').classList.remove('activeRED');
+}
+
+// Sitzposition vorne rechts
+if (
+  myValue >= 0.3 * mxValue &&
+  myValue <= 0.5 * mxValue &&
+  mzValue >= -1000 &&
+  mzValue <= -300
+) {
+  NoteStatus = 2;
+  document.querySelector('.grid-field:nth-child(115)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(135)').classList.add('activeRED');
+} else {
+  document.querySelector('.grid-field:nth-child(115)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(135)').classList.remove('activeRED');
+}
+
+// Sitzposition kante rechts
+if (
+  myValue >= -1.0 * mxValue &&
+  myValue <= 0.3 * mxValue &&
+  mzValue >= -1000 &&
+  mzValue <= -300
+) {
+  NoteStatus = 2;
+  document.querySelector('.grid-field:nth-child(75)').classList.add('activeRED');
+  document.querySelector('.grid-field:nth-child(95)').classList.add('activeRED');
+} else {
+  document.querySelector('.grid-field:nth-child(75)').classList.remove('activeRED');
+  document.querySelector('.grid-field:nth-child(95)').classList.remove('activeRED');
+}
+
+const gridFields = document.querySelectorAll('.grid-field');
+gridFields.forEach((field, index) => {
+  if (field.classList.contains('activeGreen')) {
+
+    // Get adjacent indices (left, right)
+    const leftIndex = index - 1;
+    const rightIndex = index + 1;
+
+    if (gridFields[leftIndex]) {
+        gridFields[leftIndex].classList.add('activeGreen2');
+    }
+    if (gridFields[rightIndex]) {
+        gridFields[rightIndex].classList.add('activeGreen2');
+    }
+  } else if (field.classList.contains('activeRED')) {
+    // Get adjacent indices (left, right)
+    const leftIndex = index - 1;
+    const rightIndex = index + 1;
+ 
+    // Apply orange background color to adjacent cells after a delay
+    if (gridFields[leftIndex]) {
+        gridFields[leftIndex].classList.add('activeRED2');
+    }
+    if (gridFields[rightIndex]) {
+        gridFields[rightIndex].classList.add('activeRED2');
+    }
+  } else {
+    const leftIndex = index + 1;
+    const rightIndex = index + 2;
+
+    if (gridFields[leftIndex]) {
+      gridFields[leftIndex].classList.remove('activeGreen2');
+      gridFields[leftIndex].classList.remove('activeRED2');
+    }
+    if (gridFields[rightIndex]) {
+      gridFields[rightIndex].classList.remove('activeGreen2');
+      gridFields[rightIndex].classList.remove('activeRED2');
+    }
+  }
+});
 
 }
 
@@ -323,24 +575,32 @@ if (
   (row === 18) ||
   (row === 17 && col === 1) ||
   (row === 17 && col === 2) ||
+  (row === 17 && col === 3) ||
   (row === 17 && col === 9) ||
   (row === 17 && col === 10) ||
   (row === 17 && col === 11) ||
   (row === 17 && col === 12) ||
+  (row === 17 && col === 18) ||
   (row === 17 && col === 19) ||
   (row === 17 && col === 20) ||
   (row === 16 && col === 1) ||
+  (row === 16 && col === 9) ||
   (row === 16 && col === 10) ||
   (row === 16 && col === 11) ||
+  (row === 16 && col === 12) ||
   (row === 16 && col === 20) ||
   (row === 15 && col === 1) ||
+  (row === 15 && col === 9) ||
   (row === 15 && col === 10) ||
   (row === 15 && col === 11) ||
+  (row === 15 && col === 12) ||
   (row === 15 && col === 20) ||
+  (row === 14 && col === 9) ||
   (row === 14 && col === 10) ||
   (row === 14 && col === 11) ||
-  (row === 2 && col === 7) ||
-  (row === 2 && col === 14) ||
+  (row === 14 && col === 12) ||
+  (row === 13 && col === 10) ||
+  (row === 13 && col === 11) ||
   (row === 1 && col === 1) ||
   (row === 1 && col === 6) ||
   (row === 1 && col === 7) ||
